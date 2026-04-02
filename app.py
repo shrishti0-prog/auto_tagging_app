@@ -53,7 +53,7 @@ def basic_clean(text):
 
 # Tagging function
 def tagging(text, top_k=5):
-    vector = vectorizer.transform([clean_text(text)])
+    vector = vectorizer.transform([basic_clean(text)])
     probs = lr_model.predict_proba(vector)[0]
 
     top_idx = np.argsort(probs)[-top_k:][::-1]
