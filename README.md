@@ -43,9 +43,8 @@ Relevant tags displayed with confidence scores
 
 
 👉 Add your deployed link here
-Example:
+Example:https://autotaggingapp-fzrk7zxanepnzblxsmegon.streamlit.app/
 
-https://your-app-name.streamlit.app
 📂 Project Structure
 auto-tagging-app/
 │── app.py
