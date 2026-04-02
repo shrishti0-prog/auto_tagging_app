@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pickle
+from bs4 import BeautifulSoup
 
 # Page config
 st.set_page_config(
@@ -9,42 +10,36 @@ st.set_page_config(
     layout="centered"
 )
 
-# 🌙 Custom Styling (IMPORTANT)
+# Custom CSS (UI MAGIC ✨)
 st.markdown("""
 <style>
-body {
-    background-color: #0e1117;
-}
 .main {
     background-color: #0e1117;
 }
-.title {
+h1 {
+    color: #ffffff;
     text-align: center;
-    font-size: 40px;
-    font-weight: bold;
-    color: white;
 }
-.subtitle {
-    text-align: center;
-    color: #9aa0a6;
-    margin-bottom: 30px;
-}
-.tag {
-    display: inline-block;
+.tag-box {
+    padding: 8px 15px;
+    border-radius: 20px;
     background-color: #1f77b4;
     color: white;
-    padding: 8px 14px;
-    border-radius: 20px;
+    display: inline-block;
     margin: 5px;
     font-size: 14px;
+}
+textarea {
+    border-radius: 10px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Load model
+# Load models
 lr_model = pickle.load(open("lr_model.pkl", "rb"))
-vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
+word_vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
 mlb = pickle.load(open("mlb.pkl", "rb"))
+
 all_tags = mlb.classes_
 
 # Clean text
@@ -52,48 +47,47 @@ def basic_clean(text):
     return text.lower()
 
 # Tagging function
-def tagging(text, top_k=5):
-    vector = vectorizer.transform([basic_clean(text)])
-    probs = lr_model.predict_proba(vector)[0]
+def tagging(question, top_k=5):
+    cleaned_question = basic_clean(question)
 
-    top_idx = np.argsort(probs)[-top_k:][::-1]
-    return [(all_tags[i], probs[i]) for i in top_idx]
+    vector = word_vectorizer.transform([cleaned_question])
+    pred_prob = lr_model.predict_proba(vector)[0]
 
-# 🎯 UI Header
-st.markdown('<div class="title">🔖 Auto Tagging System</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Generate smart tags using NLP</div>', unsafe_allow_html=True)
+    top_indices = np.argsort(pred_prob)[-top_k:][::-1]
+    tags = [(all_tags[i], pred_prob[i]) for i in top_indices]
 
-# ✍️ Input box
+    return tags
+
+# Header
+st.title("🔖 Auto Tagging System")
+st.markdown("### 🚀 Smart NLP-based Tag Generator")
+
+# Input box
 user_input = st.text_area(
     "Enter your question:",
     placeholder="e.g. Explain Bayesian vs Frequentist reasoning..."
 )
 
-# ⚙️ Sidebar controls
-st.sidebar.title("⚙️ Settings")
-top_k = st.sidebar.slider("Number of tags", 1, 10, 5)
-
-# 🚀 Button
+# Button
 if st.button("✨ Generate Tags"):
-    if user_input.strip():
-        
-        with st.spinner("Analyzing..."):
-            tags = tagging(user_input, top_k)
+    if user_input.strip() != "":
+        tags = tagging(user_input)
 
         st.markdown("### 🎯 Predicted Tags")
 
-        # Tag pills
+        # Display tags as stylish pills
         for tag, score in tags:
             st.markdown(
-                f'<span class="tag">{tag} ({round(score,2)})</span>',
+                f'<span class="tag-box">{tag} ({round(score,2)})</span>',
                 unsafe_allow_html=True
             )
 
-        # 📊 Chart
+        # Confidence bar chart
         st.markdown("### 📊 Confidence Scores")
-        names = [t[0] for t in tags]
-        scores = [t[1] for t in tags]
-        st.bar_chart(scores)
+        tag_names = [t[0] for t in tags]
+        tag_scores = [t[1] for t in tags]
+
+        st.bar_chart(tag_scores)
 
     else:
-        st.warning("⚠️ Please enter a question")
+        st.warning("⚠️ Please enter some text")
