@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 import pickle
-from bs4 import BeautifulSoup
+import bs4 
 
 # Page config
 st.set_page_config(
@@ -44,7 +44,7 @@ all_tags = mlb.classes_
 
 # Clean text
 def clean_text(text):
-    text = BeautifulSoup(text, "html.parser").get_text()
+    bs4.BeautifulSoup(text, "html.parser").get_text()
     return text.lower()
 
 # Tagging function
